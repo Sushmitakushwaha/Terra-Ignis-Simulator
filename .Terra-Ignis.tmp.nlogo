@@ -276,7 +276,7 @@ NIL
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)
-The Terra-Ignis Simulator
+
 
 ## HOW IT WORKS
 
@@ -309,8 +309,6 @@ The Terra-Ignis Simulator
 ## CREDITS AND REFERENCES
 
 (a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
-
-Created by - Sushmita Kumari
 @#$#@#$#@
 default
 true
