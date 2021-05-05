@@ -26,10 +26,10 @@ globals[
 ;
 ;end
 
-to Setup_startfire
+to Setup_forestFire
   clear-all
 
-  setup-patches
+  ;;setup_mountains
   create-wildfire fire-capacity[
     set color red
     set shape "fire"
@@ -39,19 +39,12 @@ to Setup_startfire
     set color green
     set shape "tree"
     setxy random-xcor random-ycor]
-  ;]
-  ;;update-plot
+  ask patches[
+    set pcolor 49]
+
+  plot-population
   set-current-plot "populations"                               ; this sets up the current data on plot populations
   clear-plot
-
-;  ask patches with [(random-float 100) < density]
-;    [ set pcolor green
-;      set shape "tree" ]
-;  ;; make a column of burning trees
-;  ;;ask patches with [pxcor = min-pxcor]
-;    ;;[ ignite ]
-;  ;; set tree counts
-;  set foresttree count patches with [pcolor = green]
 
   ask patches with [pxcor = min-pxcor]
     [ ignite ]
@@ -62,13 +55,58 @@ to Setup_startfire
   reset-ticks
 end
 
-
-to setup-patches
+to setup_mountains
+  clear-all
   ask patches
     [ set elevation (random 10000) ]
   diffuse elevation 1
   ask patches
-    [ set pcolor scale-color white elevation 1000 9000 ] ;;Larger elevation are lighter colours. The flatter surface are darker patches.
+    [ set pcolor scale-color 32 elevation 1000 9000 ] ;;Larger elevation are lighter colours. The flatter surface are darker patches.
+
+  create-wildfire fire-capacity[
+    set color red
+    set shape "fire"
+    setxy random-xcor random-ycor]
+
+  create-forest forest-density[
+    set color green
+    set shape "tree"
+    setxy random-xcor random-ycor]
+  ;]
+  plot-population
+  set-current-plot "populations"                               ; this sets up the current data on plot populations
+  clear-plot
+
+
+  set deadtrees 0
+  reset-ticks
+
+end
+
+to setup_forestFuel
+  clear-all
+
+  ask patches[
+    set pcolor 22]
+
+  create-wildfire fire-capacity[
+    set color red
+    set shape "fire"
+    setxy random-xcor random-ycor]
+
+  create-forest forest-density[
+    set color green
+    set shape "tree"
+    setxy random-xcor random-ycor]
+  ;]
+  plot-population
+  set-current-plot "populations"                               ; this sets up the current data on plot populations
+  clear-plot
+
+
+  set deadtrees 0
+  reset-ticks
+
 end
 
 to plot-population
@@ -168,7 +206,7 @@ forest-density
 forest-density
 0
 2100
-1100.0
+1150.0
 50
 1
 NIL
@@ -192,10 +230,10 @@ HORIZONTAL
 BUTTON
 16
 115
-97
+113
 148
-startfire
-Setup_startfire
+Forest Fire
+Setup_forestFire
 NIL
 1
 T
@@ -256,12 +294,46 @@ NIL
 HORIZONTAL
 
 BUTTON
-191
-161
-254
+137
+115
+200
+148
+go
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+17
+160
+115
 194
-go
-go
+Mountain Fire
+Setup_mountains
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+17
+205
+143
+238
+Forest Fuel Fire
+setup_forestFuel
 NIL
 1
 T
@@ -276,7 +348,7 @@ NIL
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)
-
+The Terra-Ignis Simulator
 
 ## HOW IT WORKS
 
@@ -309,6 +381,8 @@ NIL
 ## CREDITS AND REFERENCES
 
 (a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+
+Created by - Sushmita Kumari
 @#$#@#$#@
 default
 true
