@@ -33,8 +33,6 @@ to Setup_forestFire
 
   ask patches with [pxcor = min-pxcor]
     [ ignite ]
-  ;; set tree counts
- ;; set forest count patches with [pcolor = green]
 
   set deadtrees 0
   reset-ticks
@@ -110,6 +108,8 @@ to go
     [ ask neighbors4 with [pcolor = green]
         [ ignite ]
       set breed firefuel ]
+  ask wildfire
+  [kill-trees]
   fade-embers
   plot-population
   tick
@@ -133,22 +133,52 @@ to fade-embers
           die ] ]
 end
 
+;to burn-forest
+;  ;;let neighbors_tree one-of forest in-radius fire-radius
+;
+;  let neighbors_tree neighbors4
+;
+;  ifelse neighbors_tree != nobody
+;     [face neighbors_tree
+;      ask neighbors_tree
+;      [set breed burnedtrees die] fd 0.5
+;        hatch-firefuel 1 [ set color black
+;       fd 0.5 ]
+;        die
+;        ;;hatch 1 [fd 0.5]
+;  ]
+;     [set breed firefuel hide-turtle]
+;end
+
+;to kill-trees
+;  let neighbors_tree one-of neighbors4
+;  ifelse neighbors_tree != nobody
+;     [face neighbors_tree ask neighbors_tree [set breed treecorpses hide-turtle ] fd 0.5
+;        hatch 1 [fd 0.5]]
+;     [set breed firecorpses hide-turtle]
+;end
+
 to kill-trees
-  let neighbors_tree one-of forest in-radius fire-radius
+  let neighbors_tree one-of neighbors4
   ifelse neighbors_tree != nobody
-     [face neighbors_tree ask neighbors_tree [set breed burnedtrees hide-turtle] fd 0.5
-        hatch 1 [fd 0.5]]
+     [face neighbors_tree
+      ask neighbors_tree
+       [set breed burnedtrees] fd 0.5
+        hatch 1 [set shape "burnedtree"
+        fd 0.5]]
      [set breed firefuel hide-turtle]
 end
+
 
 to kill-tree-jump
   let direction wind
   set heading direction
   fd 2
-  let next_neighbors one-of forest in-radius fire-radius
+  let next_neighbors one-of neighbors4
   ifelse next_neighbors != nobody
       [face next_neighbors ask next_neighbors [set breed burnedtrees hide-turtle] set heading wind fd 0.5
-        hatch 1 [set heading wind fd 0.5]]
+        hatch 1 [set heading wind fd 0.5
+          set shape "burnedtree"]]
   [set breed burnedtrees hide-turtle]
 end
 
@@ -402,6 +432,18 @@ Circle -7500403 true true 110 127 80
 Circle -7500403 true true 110 75 80
 Line -7500403 true 150 100 80 30
 Line -7500403 true 150 100 220 30
+
+burnedtree
+false
+0
+Circle -16777216 true false 131 11 67
+Circle -16777216 true false 178 73 94
+Circle -16777216 true false 135 20 120
+Rectangle -16777216 true false 120 195 180 300
+Circle -16777216 true false 65 21 108
+Circle -16777216 true false 116 41 127
+Circle -16777216 true false 45 90 120
+Circle -16777216 true false 104 74 152
 
 butterfly
 true
