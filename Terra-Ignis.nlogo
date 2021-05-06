@@ -14,7 +14,6 @@ globals[
 to Setup_forestFire
   clear-all
 
-  ;;setup_mountains
   create-wildfire fire-capacity[
     set color red
     set shape "fire"
@@ -30,9 +29,6 @@ to Setup_forestFire
   plot-population
   set-current-plot "populations"                               ; this sets up the current data on plot populations
   clear-plot
-
-  ask patches with [pxcor = min-pxcor]
-    [ ignite ]
 
   set deadtrees 0
   reset-ticks
@@ -55,11 +51,11 @@ to setup_mountains
     set color green
     set shape "tree"
     setxy random-xcor random-ycor]
-  ;]
+
   plot-population
   set-current-plot "populations"                               ; this sets up the current data on plot populations
-  clear-plot
 
+  clear-plot
 
   set deadtrees 0
   reset-ticks
@@ -68,9 +64,6 @@ end
 
 to setup_forestFuel
   clear-all
-
-  ask patches[
-    set pcolor 22]
 
   create-wildfire fire-capacity[
     set color red
@@ -89,6 +82,8 @@ to setup_forestFuel
 
   set deadtrees 0
   reset-ticks
+  ask patches[
+    set pcolor 22]
 
 end
 
@@ -103,63 +98,31 @@ end
 to go
   if not any? turtles with [shape = "tree"]  ;; either fires or embers
     [ stop ]
-
-  ask wildfire
-    [ ask neighbors4 with [pcolor = green]
-        [ ignite ]
-      set breed firefuel ]
-  ask wildfire
-  [kill-trees]
-  fade-embers
+  startFire
   plot-population
   tick
 end
 
 
-to ignite  ;; patch procedure
-  sprout-wildfire 1
-    [ set color red ]
-  set pcolor black
-  set deadtrees deadtrees + 1
-end
-
-;; achieve fading color effect for the fire as it burns
-
-to fade-embers
-  ask firefuel
-    [ set color color - 0.3  ;; make red darker
-      if color < red - 3.5     ;; are we almost at black?
-        [ set pcolor color
-          die ] ]
-end
-
-;to burn-forest
-;  ;;let neighbors_tree one-of forest in-radius fire-radius
+;to ignite  ;; patch procedure
+;  sprout-wildfire 1
+;    [ set color red ]
+;  set pcolor black
+;  set deadtrees deadtrees + 1
+;end
 ;
-;  let neighbors_tree neighbors4
+;;; achieve fading color effect for the fire as it burns
 ;
-;  ifelse neighbors_tree != nobody
-;     [face neighbors_tree
-;      ask neighbors_tree
-;      [set breed burnedtrees die] fd 0.5
-;        hatch-firefuel 1 [ set color black
-;       fd 0.5 ]
-;        die
-;        ;;hatch 1 [fd 0.5]
-;  ]
-;     [set breed firefuel hide-turtle]
+;to fade-embers
+;  ask firefuel
+;    [ set color color - 0.3  ;; make red darker
+;      if color < red - 3.5     ;; are we almost at black?
+;        [ set pcolor color
+;          die ] ]
 ;end
 
-;to kill-trees
-;  let neighbors_tree one-of neighbors4
-;  ifelse neighbors_tree != nobody
-;     [face neighbors_tree ask neighbors_tree [set breed treecorpses hide-turtle ] fd 0.5
-;        hatch 1 [fd 0.5]]
-;     [set breed firecorpses hide-turtle]
-;end
-
-to kill-trees
-  let neighbors_tree one-of neighbors4
+to burnTree
+  let neighbors_tree one-of forest in-radius fire-radius
   ifelse neighbors_tree != nobody
      [face neighbors_tree
       ask neighbors_tree
@@ -170,29 +133,265 @@ to kill-trees
 end
 
 
-to kill-tree-jump
-  let direction wind
-  set heading direction
+to burnNextTree
+  set heading windDirection
   fd 2
-  let next_neighbors one-of neighbors4
+  let next_neighbors one-of forest in-radius fire-radius
   ifelse next_neighbors != nobody
-      [face next_neighbors ask next_neighbors [set breed burnedtrees hide-turtle] set heading wind fd 0.5
-        hatch 1 [set heading wind fd 0.5
-          set shape "burnedtree"]]
-  [set breed burnedtrees hide-turtle]
+      [face next_neighbors ask next_neighbors [set breed burnedtrees set shape "burnedtree"] set heading windDirection fd 0.5
+        hatch 1 [set heading windDirection fd 0.5]]
+  [set breed firefuel hide-turtle]
+end
+
+
+to windBurnTree [speed]
+  let neighbors_tree one-of forest in-radius fire-radius
+  ifelse neighbors_tree != nobody
+     [face neighbors_tree ask neighbors_tree [set breed burnedtrees hide-turtle] set heading windDirection fd speed
+      hatch 1 [set heading windDirection fd speed]]
+    [set breed firefuel hide-turtle]
+end
+
+to startFire
+
+ask wildfire
+  [
+
+
+    if (pcolor = 22) or (pcolor = 16);;Bodenfeuer
+    [
+      set pcolor 16
+      if wind[
+        set heading windDirection
+        rt 2
+        fd 0.5
+        set pcolor 16
+      ]
+      ask neighbors4 [ set pcolor 16 ]
+      fd 0.5
+      set pcolor 16
+    ]
+
+
+    let probability random 100
+    if probability <= fireProbability
+      [
+
+        if wind[
+        set heading 0 ;; if wind parameter is turned off then there is no wind
+        set heading windDirection ;; otherwise set the wind direction
+        ifelse windStrength > 2
+          [
+          let directionOfWind (windDirection + (((random 25) * 2) - random 25))
+          let strengthOfWind (windStrength + (random 25))
+
+          if (((directionOfWind >= 0) and (directionOfWind <= 89)) or ((directionOfWind >= 270) and (directionOfWind <= 359))) and (pcolor >= 33 and pcolor < 40)
+            [
+              windBurnTree 0.8
+            ]
+          if (((directionOfWind >= 0) and (directionOfWind <= 89)) or ((directionOfWind >= 270) and (directionOfWind <= 359))) and (pcolor = 32)
+            [
+              windBurnTree 2
+            ]
+          if (((directionOfWind >= 0) and (directionOfWind <= 89)) or ((directionOfWind >= 270) and (directionOfWind <= 359))) and (pcolor = 31)
+            [
+              windBurnTree 3
+            ]
+          if (((directionOfWind >= 90) and (directionOfWind <= 179)) or ((directionOfWind >= 180) and (directionOfWind <= 269))) and (pcolor >= 33 and pcolor < 40)
+            [
+              windBurnTree 0.8
+            ]
+          if (((directionOfWind >= 90) and (directionOfWind <= 179)) or ((directionOfWind >= 180) and (directionOfWind <= 269))) and (pcolor = 32)
+            [
+              windBurnTree 0.4
+            ]
+          if (((directionOfWind >= 90) and (directionOfWind <= 179)) or ((directionOfWind >= 180) and (directionOfWind <= 269))) and (pcolor = 31)
+            [
+              windBurnTree 0.1
+            ]
+
+
+            if fireSkip
+            [
+              if random 100 <= fireSkipChance
+              [
+                burnNextTree
+              ]
+            ]
+
+
+
+          ]
+          [burnTree]
+
+               ]
+        burnTree
+      ]
+    set breed firefuel
+
+  ]
+  plot-population
+  tick
 end
 
 
 
+
+
+;to consume
+;ask fires
+;[
+;    ; if there is wind, blow an ember in the direction of the
+;    ; wind, according to the strength
+;    ifelse wind-strength > 0
+;    [
+;      ; get the direction, taking into account variability
+;      let dir (wind-direction + (((random wind-direction-variability) * 2) - wind-direction-variability))
+;
+;      ; get the wind strength, taking into account variability
+;      let str (wind-strength + (random gust-strength))
+;
+;      ; Verify that we are landing the ember on a valid patch
+;      ; If so, ignite it
+;      let p patch-at-heading-and-distance dir str
+;      if is-patch? p
+;      [
+;        ask p [ if pcolor = green [ ignite ]]
+;      ]
+;
+;      ; burn local forest, taking into account wind direction
+;      let dir-min wind-direction - (45 - random 10) ;
+;      ;if dir-min < 0 [set dir-min 360 + dir-min]
+;      let dir-max wind-direction + (45 + random 10);
+;      if dir-max > 360 [
+;        set dir-max dir-max - 360
+;        Set dir-min dir-min - 360
+;        ]
+;      ask neighbors with [pcolor = green]
+;      [
+;        ; if this patch is within our direction window, then burn it
+;        let corrected-dir towards myself
+;        ifelse corrected-dir >= 180
+;        [ set corrected-dir corrected-dir - 180 ]
+;        [ set corrected-dir corrected-dir + 180 ]
+;
+;        if (corrected-dir >= dir-min) and (corrected-dir <= dir-max) [ignite]
+;      ]
+;    ]
+;    [
+;      ; burn local forest, in all directions if there is no wind
+;      ask neighbors4 with [pcolor = green] [ ignite ]
+;    ]
+;
+;    set breed embers
+;]
+;end
+
+
+
+
+
+
+
+
+;to go
+;  if count trees = 0 [stop];; if all trees are burned - stop
+;  if count patches with [pcolor = 105] = count patches [stop]
+;  if rain?
+;  [
+;    create-raindrops rain-rate
+;       [move-to one-of patches
+;        set shape "circle"
+;        set size 0.5
+;        set color 104 ]
+;  ]
+;  ask patches with [any? raindrops-here and any? fires-here];;if rain and fire is on the same patch
+;    [
+;      set pcolor 105
+;      ask fires[
+;        if pcolor = 105[
+;          die
+;        ]
+;      ]
+;    ]
+;
+;  ask fires
+;  [
+;    if (pcolor = 35.6) or (pcolor = 16);;Bodenfeuer
+;    [
+;      set pcolor 16
+;      if wind_on_off?[
+;        set heading wind-direction
+;        rt 2
+;        fd 0.5
+;        set pcolor 16
+;      ]
+;      ask neighbors4 [ set pcolor 16 ]
+;      fd 0.5
+;      set pcolor 16
+;    ]
+;    let probability random 100
+;    if probability <= probability-spread
+;      [
+;        if wind_on_off?
+;          [
+;            set heading 0
+;            set heading wind-direction
+;            ;;very flat
+;            if (((wind-direction >= 0) and (wind-direction <= 89)) or ((wind-direction >= 271) and (wind-direction <= 359))) and (pcolor = grey)
+;            [
+;              hill-kill-trees 0.8
+;            ]
+;            if (((wind-direction >= 0) and (wind-direction <= 89)) or ((wind-direction >= 271) and (wind-direction <= 359))) and (pcolor = 2);,steiler
+;            [
+;              hill-kill-trees 2
+;            ]
+;            if (((wind-direction >= 0) and (wind-direction <= 89)) or ((wind-direction >= 271) and (wind-direction <= 359))) and (pcolor = 1);;am steilsten
+;            [
+;              hill-kill-trees 3
+;            ]
+;            if (((wind-direction >= 90) and (wind-direction <= 180)) or ((wind-direction >= 181) and (wind-direction <= 269))) and (pcolor = grey);;ganz flach
+;            [
+;              hill-kill-trees 0.8
+;            ]
+;            if (((wind-direction >= 90) and (wind-direction <= 180)) or ((wind-direction >= 181) and (wind-direction <= 269))) and (pcolor = 2);;steiler
+;            [
+;              hill-kill-trees 0.4
+;            ]
+;            if (((wind-direction >= 90) and (wind-direction <= 180)) or ((wind-direction >= 181) and (wind-direction <= 269))) and (pcolor = 1);,am Steilsten
+;            [
+;              hill-kill-trees 0.1
+;            ]
+;            if big_jumps?
+;              [
+;                if random 100 <= probability-big-jumps
+;                  [
+;                    kill-tree-jump
+;                ]
+;            ]
+;            hill-kill-trees 0.5
+;        ]
+;        kill-trees
+;      ]
+;    ]
+;  update-plot
+;  tick
+;end
+;
+;
+;
+;
+;
+;
 @#$#@#$#@
 GRAPHICS-WINDOW
 465
 10
-902
-448
+985
+531
 -1
 -1
-13.0
+15.52
 1
 10
 1
@@ -260,9 +459,9 @@ NIL
 1
 
 PLOT
-912
+994
 10
-1112
+1194
 160
 populations
 wildfire
@@ -298,11 +497,11 @@ SLIDER
 74
 379
 107
-wind
-wind
+windDirection
+windDirection
 0
 360
-50.0
+40.0
 10
 1
 NIL
@@ -315,7 +514,7 @@ BUTTON
 148
 go
 go
-NIL
+T
 1
 T
 OBSERVER
@@ -358,6 +557,73 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+23
+355
+126
+388
+wind
+wind
+1
+1
+-1000
+
+SLIDER
+263
+152
+435
+185
+windStrength
+windStrength
+0
+25
+8.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+271
+228
+443
+261
+fireProbability
+fireProbability
+0
+100
+25.0
+10
+1
+NIL
+HORIZONTAL
+
+SWITCH
+23
+317
+126
+350
+fireSkip
+fireSkip
+0
+1
+-1000
+
+SLIDER
+157
+313
+329
+346
+fireSkipChance
+fireSkipChance
+0
+20
+4.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
