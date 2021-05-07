@@ -11,6 +11,14 @@ globals[
   deadtrees
 ]
 
+to plot-population ; this sets up the current data on plot populations
+  set-current-plot "Populations"
+  set-current-plot-pen "forest"
+  plot count forest
+  set-current-plot-pen "wildfire"
+  plot count wildfire
+end
+
 to Setup_forestFire
   clear-all
 
@@ -58,7 +66,7 @@ end
 
 to setup_forestFuel
   clear-all
-  plot-population
+  plot-population ; this sets up the current data on plot populations
 
   create-wildfire fire-capacity[
     set color red
@@ -70,109 +78,41 @@ to setup_forestFuel
     set shape "tree"
     setxy random-xcor random-ycor]
 
-  ;;set-current-plot "populations"                               ; this sets up the current data on plot populations
   set deadtrees 0
   reset-ticks
   ask patches[
     set pcolor 22]
 end
 
-to plot-population
-  set-current-plot "Populations"
-  set-current-plot-pen "forest"
-  plot count forest
-  set-current-plot-pen "wildfire"
-  plot count wildfire
-end
 
 to go
   if not any? turtles with [shape = "tree"]  ;; either fires or embers
   [stop]
 
   startFire
-
-;  ask wildfire
-;  [
-;
-;    if (pcolor = 22) or (pcolor = 16);;Bodenfeuer
-;    [
-;      set pcolor 16
-;      if wind[
-;        set heading windDirection
-;        rt 2
-;        fd 0.5
-;        set pcolor 16
-;      ]
-;      ask neighbors4 [ set pcolor 16 ]
-;      fd 0.5
-;      set pcolor 16
-;    ]
-;
-;
-;    let probability random 100
-;    if probability <= fireProbability
-;      [
-;
-;        if wind
-;        [
-;        set heading 0 ;; if wind parameter is turned off then there is no wind
-;        set heading windDirection ;; otherwise set the wind direction
-;
-;          if (((windDirection >= 0) and (windDirection <= 89)) or ((windDirection >= 270) and (windDirection <= 359))) and (pcolor >= 33 and pcolor < 40)
-;            [
-;              windBurnTree 0.8
-;            ]
-;          if (((windDirection >= 0) and (windDirection <= 89)) or ((windDirection >= 270) and (windDirection <= 359))) and (pcolor = 32)
-;            [
-;              windBurnTree 2
-;            ]
-;          if (((windDirection >= 0) and (windDirection <= 89)) or ((windDirection >= 270) and (windDirection <= 359))) and (pcolor = 31)
-;            [
-;              windBurnTree 3
-;            ]
-;          if (((windDirection >= 90) and (windDirection <= 179)) or ((windDirection >= 180) and (windDirection <= 269))) and (pcolor >= 33 and pcolor < 40)
-;            [
-;              windBurnTree 0.8
-;            ]
-;          if (((windDirection >= 90) and (windDirection <= 179)) or ((windDirection >= 180) and (windDirection <= 269))) and (pcolor = 32)
-;            [
-;              windBurnTree 0.4
-;            ]
-;          if (((windDirection >= 90) and (windDirection <= 179)) or ((windDirection >= 180) and (windDirection <= 269))) and (pcolor = 31)
-;            [
-;              windBurnTree 0.1
-;            ]
-;
-;
-;            if fireSkip
-;            [
-;              if random 100 <= fireSkipChance
-;              [
-;                burnNextTree
-;              ]
-;          ]
-;            windBurnTree 0.5
-;
-;          ]
-;
-;        burnTree
-;        ]
-;      ]
-
-
   plot-population
   tick
 end
 
 
 to burnTree
-  let neighbors_tree one-of forest in-radius fire-radius
-  ifelse neighbors_tree != nobody
-     [face neighbors_tree
-      ask neighbors_tree
+  let treeNearby one-of forest in-radius fire-radius
+  ifelse treeNearby != nobody
+     [face treeNearby
+      ask treeNearby
        [set breed burnedtrees set shape "treeburned"] fd 0.5
         hatch 1 [fd 0.5]]
-     [set breed firefuel hide-turtle]
+     [set breed firefuel set shape "fuel" hide-turtle]
+end
+
+
+
+to windBurnTree [speed]
+  let treeNearby one-of forest in-radius fire-radius
+  ifelse treeNearby != nobody
+     [face treeNearby ask treeNearby [set breed burnedtrees set shape "treeburned"] set heading windDirection fd speed
+      hatch 1 [set heading windDirection fd speed]]
+    [set breed firefuel set shape "fuel" hide-turtle]
 end
 
 
@@ -180,28 +120,20 @@ to burnNextTree
   let dir windDirection
   set heading dir
   fd 2
-  let next_neighbors one-of forest in-radius fire-radius
-  ifelse next_neighbors != nobody
-      [face next_neighbors ask next_neighbors [set breed burnedtrees set shape "treeburned"] set heading windDirection fd 0.5
+  let tree_nextNearby one-of forest in-radius fire-radius
+  ifelse tree_nextNearby != nobody
+      [face tree_nextNearby ask tree_nextNearby [set breed burnedtrees set shape "treeburned"] set heading windDirection fd 0.5
         hatch 1 [set heading windDirection fd 0.5]]
-  [set breed firefuel hide-turtle]
+  [set breed firefuel set shape "fuel" hide-turtle]
 end
 
-
-to windBurnTree [speed]
-  let neighbors_tree one-of forest in-radius fire-radius
-  ifelse neighbors_tree != nobody
-     [face neighbors_tree ask neighbors_tree [set breed burnedtrees set shape "treeburned"] set heading windDirection fd speed
-      hatch 1 [set heading windDirection fd speed]]
-    [set breed firefuel hide-turtle]
-end
 
 to startFire
 
 ask wildfire
   [
 
-    if (pcolor = 22) or (pcolor = 16);;Bodenfeuer
+    if (pcolor = 22) or (pcolor = 16);
     [
       set pcolor 16
       if wind[
@@ -222,6 +154,9 @@ ask wildfire
 
         if wind
         [
+          ifelse random 10 < windStrength
+          [
+
         set heading 0 ;; if wind parameter is turned off then there is no wind
         set heading windDirection ;; otherwise set the wind direction
 
@@ -249,8 +184,6 @@ ask wildfire
             [
               windBurnTree 0.1
             ]
-
-
             if fireSkip
             [
               if random 100 <= fireSkipChance
@@ -259,6 +192,8 @@ ask wildfire
               ]
           ]
             windBurnTree 0.5
+        ]
+          [burnTree]
 
           ]
 
@@ -273,24 +208,24 @@ end
 GRAPHICS-WINDOW
 425
 10
-985
-571
+1047
+633
 -1
 -1
-16.73
+15.0
 1
 10
 1
 1
 1
 0
+0
+0
 1
-1
-1
--16
-16
--16
-16
+-20
+20
+-20
+20
 0
 0
 1
@@ -306,7 +241,7 @@ forest-density
 forest-density
 0
 2100
-1000.0
+1500.0
 50
 1
 NIL
@@ -321,7 +256,7 @@ fire-capacity
 fire-capacity
 1
 20
-4.0
+7.0
 1
 1
 NIL
@@ -345,10 +280,10 @@ NIL
 1
 
 PLOT
-994
+1065
 10
-1412
-231
+1411
+214
 populations
 wildfire
 forest
@@ -372,7 +307,7 @@ fire-radius
 fire-radius
 0.1
 5
-1.1
+1.3
 0.2
 1
 NIL
@@ -463,23 +398,23 @@ SLIDER
 windStrength
 windStrength
 0
-25
-8.0
+10
+7.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-19
-166
-191
-199
+20
+123
+192
+156
 fireProbability
 fireProbability
 0
 100
-10.0
+80.0
 10
 1
 NIL
@@ -487,9 +422,9 @@ HORIZONTAL
 
 SWITCH
 20
-127
+164
 123
-160
+197
 fireSkip
 fireSkip
 0
@@ -511,11 +446,68 @@ fireSkipChance
 NIL
 HORIZONTAL
 
+MONITOR
+1066
+281
+1158
+326
+Trees
+count forest
+17
+1
+11
+
+MONITOR
+1066
+335
+1198
+380
+Burned Trees
+count burnedTrees
+17
+1
+11
+
+MONITOR
+1066
+388
+1163
+433
+Fire
+count wildfire
+17
+1
+11
+
+MONITOR
+1066
+228
+1248
+273
+Percentage of Trees Burned
+((forest-density - count forest) / forest-density) * 100
+17
+1
+11
+
+MONITOR
+1066
+443
+1189
+488
+Burnt FIre Embers
+count firefuel
+17
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+
 The Terra-Ignis Simulator
+
+It simulates the behaviour of forest fire. 
 
 ## HOW IT WORKS
 
@@ -713,6 +705,15 @@ Circle -7500403 true true 96 51 108
 Circle -16777216 true false 113 68 74
 Polygon -10899396 true false 189 233 219 188 249 173 279 188 234 218
 Polygon -10899396 true false 180 255 150 210 105 210 75 240 135 240
+
+fuel
+true
+0
+Polygon -6459832 true false 165 285 120 285 90 270 75 240 75 225 60 195 60 150 75 180 90 210 60 150 90 90 90 135 90 165 90 120 105 60 105 105 105 60 120 30 120 15 165 45 180 90 180 60 180 45 210 90 195 120 210 90 195 60 240 105 225 150 240 105 255 150 240 195 210 255 165 285
+Polygon -955883 true false 90 195 90 195
+Polygon -955883 true false 120 180
+Polygon -955883 true false 165 285 120 285 90 240 105 165 90 210 120 135 120 180 120 90 135 75 135 45 150 60 150 90 165 150 165 120 195 165 180 135 210 150 225 180 165 285 150 270
+Polygon -16777216 true false 165 285 135 285 120 255 120 225 150 210 165 180 180 210 180 225 180 270 165 285 165 285
 
 house
 false
